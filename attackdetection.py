@@ -14,6 +14,8 @@ This is a simpler, classical ML approach compared to the CNN + XGBoost model in 
 
 import pandas as pd
 import numpy as np
+from xgboost import XGBClassifier
+
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
@@ -178,3 +180,46 @@ pred_counts = dict(zip(unique, counts))
 print("\nPredicted label counts on test set:")
 for label, count in pred_counts.items():
     print(f"{label}: {count}")
+
+
+# ============================================================
+# ----------- 8. Train and Evaluate XGBoost Model ------------
+# ============================================================
+
+print("\nTraining XGBoost model...")
+
+xgb_model = XGBClassifier(
+    n_estimators=300,
+    max_depth=8,
+    learning_rate=0.05,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    objective="binary:logistic",
+    eval_metric="logloss",
+    n_jobs=-1
+)
+
+# Fit model
+xgb_model.fit(X_train, y_train_binary)
+
+# Predict
+y_pred_xgb = xgb_model.predict(X_test)
+
+# Accuracy
+xgb_acc = accuracy_score(y_test_binary, y_pred_xgb)
+print(f"\nXGBoost Test Accuracy: {xgb_acc:.4f}")
+
+# Classification report
+print("\nXGBoost Classification Report (0 = Normal, 1 = Attack):")
+print(classification_report(y_test_binary, y_pred_xgb, target_names=["Normal", "Attack"]))
+
+# Confusion matrix
+cm_xgb = confusion_matrix(y_test_binary, y_pred_xgb)
+print("\nXGBoost Confusion Matrix:\n", cm_xgb)
+
+# Plot confusion matrix
+disp_xgb = ConfusionMatrixDisplay(confusion_matrix=cm_xgb, display_labels=["Normal", "Attack"])
+disp_xgb.plot(cmap="Greens", values_format="d")
+plt.title("IoT Attack Detection - Confusion Matrix (XGBoost)")
+plt.tight_layout()
+plt.show()
